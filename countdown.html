@@ -1061,6 +1061,28 @@
     <button class="btn btn-outline" onclick="goToMenu()">← Back</button>
     <button class="btn btn-danger btn-sm" onclick="clearLeaderboard()">Clear Leaderboard</button>
   </div>
+  
+
+   <div class="setting-desc"><br/><br/><br/>Last Update: <span id="lastModified"></span>
+  
+
+    <script>
+        // Function to display the last modified date and time
+        function displayLastModified() {
+            // Get the last modified date string
+            var lastModifiedDate = document.lastModified;
+
+            // Optional: Format the date string into a more readable local time format
+            var formattedDate = new Date(lastModifiedDate).toLocaleString();
+
+            // Insert the date into the HTML element
+            document.getElementById("lastModified").textContent = formattedDate;
+        }
+
+        // Call the function when the page loads
+        window.onload = displayLastModified;
+    </script>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════
