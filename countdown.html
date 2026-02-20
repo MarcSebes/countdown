@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Version 1.0.1 -->
+<!-- Version 1.0.2 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -856,6 +856,7 @@
       <button class="draw-btn vowel" id="btnVowel" onclick="drawLetter('vowel')">+ Vowel</button>
       <button class="draw-btn consonant" id="btnConsonant" onclick="drawLetter('consonant')">+ Consonant</button>
     </div>
+    <button class="btn btn-ghost btn-sm btn-block" id="btnQuickPick" onclick="quickPick()" style="margin-bottom:10px;letter-spacing:0.08em">⚡ Quick Pick: 4 Vowels + 5 Consonants</button>
     <div id="setupLetterHint" class="text-grey text-sm text-center" style="min-height:18px"></div>
   </div>
 
@@ -1327,7 +1328,15 @@ function startLettersSetup() {
   document.getElementById('btnStartLetters').disabled = true;
   document.getElementById('btnVowel').disabled = false;
   document.getElementById('btnConsonant').disabled = false;
+  document.getElementById('btnQuickPick').style.display = '';
   showScreen('screenLettersSetup');
+}
+
+function quickPick() {
+  // Reset to a clean state first, then draw 4 vowels + 5 consonants
+  startLettersSetup();
+  for (let i = 0; i < 4; i++) drawLetter('vowel');
+  for (let i = 0; i < 5; i++) drawLetter('consonant');
 }
 
 function drawLetter(type) {
@@ -1342,6 +1351,7 @@ function drawLetter(type) {
   pool.splice(idx, 1);
 
   ls.drawnTiles.push({ letter, type });
+  document.getElementById('btnQuickPick').style.display = 'none';
   if (type === 'vowel') ls.vowelCount++;
   else ls.consonantCount++;
 
