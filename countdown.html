@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Version 1.0.2 -->
+<!-- Version 1.0.3: More Solutions in Letter Game -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1507,7 +1507,7 @@ function submitLetters() {
   }
 
   // AI reveal
-  const bestWords = findBestWords(allLetters);
+  const wordGroups = findBestWords(allLetters);
 
   // Save to session
   if (state.session.rounds === 0) state.session.lettersRounds = 0;
@@ -1523,7 +1523,7 @@ function submitLetters() {
     label,
     bannerClass,
     valid,
-    bestWords,
+    wordGroups,
     allLetters
   });
 }
@@ -1556,22 +1556,24 @@ function isValidWord(word, availableLetters) {
 
 function findBestWords(letters) {
   const avail = letters.map(l => l.toLowerCase());
-  let best = [];
-  let bestLen = 0;
+  // grouped[len] = array of words of that length
+  const grouped = {};
 
   for (const word of WORD_LIST) {
-    if (word.length < 2) continue;
-    const usable = canMakeWord(word, avail);
-    if (usable) {
-      if (word.length > bestLen) {
-        bestLen = word.length;
-        best = [word];
-      } else if (word.length === bestLen && best.length < 3) {
-        best.push(word);
-      }
+    if (word.length < 6 || word.length > 9) continue;
+    if (canMakeWord(word, avail)) {
+      if (!grouped[word.length]) grouped[word.length] = [];
+      grouped[word.length].push(word);
     }
   }
-  return best;
+
+  // Sort each group alphabetically, cap at 20 per length
+  for (const len of Object.keys(grouped)) {
+    grouped[len].sort();
+    if (grouped[len].length > 20) grouped[len] = grouped[len].slice(0, 20);
+  }
+
+  return grouped;
 }
 
 function canMakeWord(word, avail) {
@@ -1993,11 +1995,22 @@ function showResult(data) {
   // AI reveal
   const aiContent = document.getElementById('aiContent');
   if (data.mode === 'letters') {
-    if (data.bestWords && data.bestWords.length) {
-      const words = data.bestWords.map(w => `<span class="ai-word">${w.toUpperCase()}</span>`).join('  ·  ');
-      aiContent.innerHTML = words + `<div class="text-grey text-sm mt-8">${data.bestWords[0].length}-letter word${data.bestWords.length>1?'s':''}</div>`;
+    const groups = data.wordGroups || {};
+    const lengths = Object.keys(groups).map(Number).sort((a,b) => b - a);
+    if (lengths.length === 0) {
+      aiContent.innerHTML = '<span class="text-grey">No words of 6+ letters found!</span>';
     } else {
-      aiContent.innerHTML = '<span class="text-grey">No words found (try different letters!)</span>';
+      aiContent.innerHTML = lengths.map(len => {
+        const words = groups[len];
+        const label = len === 9 ? '9 letters ★' : len + ' letters';
+        const wordSpans = words.map(w =>
+          `<span style="font-family:var(--font-display);font-size:${len===9?'28px':'22px'};color:${len===9?'var(--gold)':'var(--white)'};letter-spacing:0.08em;margin-right:10px">${w.toUpperCase()}</span>`
+        ).join('');
+        return `<div style="margin-bottom:12px">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.25em;color:var(--teal);margin-bottom:5px">${label} (${words.length}${groups[len].length===20?'+':''})</div>
+          <div style="line-height:2">${wordSpans}</div>
+        </div>`;
+      }).join('');
     }
   } else {
     const sol = data.aiSolution;
