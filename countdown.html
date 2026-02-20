@@ -2112,14 +2112,16 @@ function shuffle(arr) {
 
 // ── LOADING OVERLAY ──
 function showLoadingOverlay(msg) {
-  document.getElementById('loadingOverlay').classList.remove('hidden');
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.style.display = 'flex';
+  overlay.style.pointerEvents = 'auto';
+  overlay.style.opacity = '1';
   document.getElementById('loadingMsg').textContent = msg || 'Loading dictionary…';
 }
 function hideLoadingOverlay() {
   const overlay = document.getElementById('loadingOverlay');
-  overlay.style.transition = 'opacity 0.5s';
-  overlay.style.opacity = '0';
-  setTimeout(() => overlay.classList.add('hidden'), 500);
+  overlay.style.pointerEvents = 'none';
+  overlay.style.display = 'none';
 }
 
 // ── FALLBACK WORDLIST (used if fetch fails) ──
@@ -2143,6 +2145,3 @@ goToMenu();
 </script>
 </body>
 </html>
-
-
-
