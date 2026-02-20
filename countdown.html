@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Version 1.0.3: More Solutions in Letter Game -->
+<!-- Version 1.0.3.1 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2008,7 +2008,7 @@ function showResult(data) {
         ).join('');
         return `<div style="margin-bottom:12px">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.25em;color:var(--teal);margin-bottom:5px">${label} (${words.length}${groups[len].length===20?'+':''})</div>
-          <div style="line-height:2">${wordSpans}</div>
+          <div style="line-height:2;flex-wrap:wrap;display:flex;gap:4px 0">${wordSpans}</div>
         </div>`;
       }).join('');
     }
