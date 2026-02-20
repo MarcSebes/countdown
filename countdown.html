@@ -2067,8 +2067,7 @@ function shuffle(arr) {
   const WORDLIST_URL = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt';
 
   function processWords(text) {
-    const lines = text.split('
-');
+    const lines = text.split('\n');
     let count = 0;
     for (const line of lines) {
       const w = line.trim().toLowerCase();
