@@ -1,4 +1,2226 @@
 <!DOCTYPE html>
+<!-- Version 1.0.5 Using SCOWL 60 Word List -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Countdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --navy-mid: #162436;
+    --navy-light: #1e3250;
+    --gold: #f5c842;
+    --gold-dim: #c9a230;
+    --gold-pale: #fdf0b0;
+    --orange: #e8722a;
+    --teal: #2ab5c0;
+    --white: #f5f0e8;
+    --grey: #8a9bb0;
+    --red: #e84040;
+    --green: #3dba6e;
+    --tile-bg: #1e3250;
+    --tile-border: #2e4d72;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── BACKGROUND ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245,200,66,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 90% 90%, rgba(42,181,192,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .screen {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    animation: fadeIn 0.4s ease;
+  }
+  .screen.hidden { display: none; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { 0%{transform:scale(0.7);opacity:0} 60%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+  @keyframes flip { 0%{transform:rotateY(90deg);opacity:0} 100%{transform:rotateY(0);opacity:1} }
+  @keyframes pulse-gold { 0%,100%{box-shadow:0 0 0 0 rgba(245,200,66,0.4)} 50%{box-shadow:0 0 0 12px rgba(245,200,66,0)} }
+  @keyframes tick { 0%{transform:scale(1)} 50%{transform:scale(0.96)} 100%{transform:scale(1)} }
+  @keyframes scoreUp { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-40px);opacity:0} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+
+  /* ─── LOGO ─── */
+  .logo {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 10vw, 80px);
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    text-shadow: 0 0 60px rgba(245,200,66,0.3), 0 4px 0 rgba(0,0,0,0.5);
+    line-height: 1;
+  }
+  .logo-sub {
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-top: 4px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 32px;
+    border-radius: 4px;
+    border: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-gold {
+    background: var(--gold);
+    color: var(--navy);
+  }
+  .btn-gold:hover { background: #ffd54f; box-shadow: 0 0 24px rgba(245,200,66,0.4); }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--white);
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.07);
+    color: var(--white);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+
+  .btn-danger {
+    background: rgba(232,64,64,0.15);
+    color: var(--red);
+    border: 1px solid rgba(232,64,64,0.3);
+  }
+  .btn-danger:hover { background: rgba(232,64,64,0.25); }
+
+  .btn-sm { padding: 8px 18px; font-size: 13px; }
+  .btn-lg { padding: 18px 48px; font-size: 17px; }
+  .btn-block { width: 100%; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ─── MODE CARDS ─── */
+  .mode-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 540px;
+    margin: 32px 0;
+  }
+
+  .mode-card {
+    background: var(--navy-light);
+    border: 2px solid var(--tile-border);
+    border-radius: 8px;
+    padding: 28px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .mode-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .mode-card.letters::before { background: radial-gradient(ellipse at top, rgba(245,200,66,0.12), transparent 70%); }
+  .mode-card.numbers::before { background: radial-gradient(ellipse at top, rgba(42,181,192,0.12), transparent 70%); }
+  .mode-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: var(--shadow); }
+  .mode-card:hover::before { opacity: 1; }
+  .mode-card-icon { font-size: 36px; margin-bottom: 12px; }
+  .mode-card-title { font-family: var(--font-display); font-size: 28px; letter-spacing: 0.1em; color: var(--gold); }
+  .mode-card-desc { font-size: 13px; color: var(--grey); margin-top: 6px; line-height: 1.4; }
+
+  /* ─── TILES ─── */
+  .tiles-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 16px 0;
+  }
+
+  .tile {
+    width: 62px;
+    height: 72px;
+    background: var(--tile-bg);
+    border: 2px solid var(--tile-border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 36px;
+    color: var(--white);
+    cursor: default;
+    transition: all 0.15s ease;
+    position: relative;
+    user-select: none;
+  }
+
+  .tile.letter-tile { font-size: 34px; }
+  .tile.number-tile { font-size: 28px; width: 70px; }
+  .tile.number-tile.big { color: var(--gold); border-color: var(--gold-dim); }
+
+  .tile.clickable {
+    cursor: pointer;
+  }
+  .tile.clickable:hover {
+    background: var(--navy-light);
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  }
+  .tile.selected {
+    background: var(--gold);
+    color: var(--navy);
+    border-color: var(--gold);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(245,200,66,0.35);
+  }
+ .tile.used {
+    opacity: 0.35;
+    background: #0a1520;
+    border-color: #1a2a3a;
+    color: #2a4060;
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+  }
+  .tile.used:hover {
+    background: #0a1520;
+    border-color: #1a2a3a;
+    color: #2a4060;
+    transform: none;
+    box-shadow: none;
+  }
+  .tile.revealed {
+    animation: flip 0.3s ease forwards;
+  }
+  .tile.empty {
+    background: rgba(255,255,255,0.04);
+    border: 2px dashed rgba(255,255,255,0.12);
+  }
+  .tile.vowel { border-color: rgba(245,200,66,0.4); }
+  .tile.consonant { border-color: rgba(42,181,192,0.3); }
+
+  /* ─── TIMER ─── */
+  .timer-wrap {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 8px;
+  }
+  .timer-svg { transform: rotate(-90deg); }
+  .timer-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 6; }
+  .timer-bar {
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear, stroke 0.5s;
+  }
+  .timer-bar.warning { stroke: var(--orange); }
+  .timer-bar.danger { stroke: var(--red); animation: pulse-gold 1s infinite; }
+  .timer-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 38px;
+    color: var(--gold);
+    transition: color 0.5s;
+  }
+  .timer-num.warning { color: var(--orange); }
+  .timer-num.danger { color: var(--red); animation: tick 1s infinite; }
+
+  /* ─── WORD INPUT ─── */
+  .word-display {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    min-height: 70px;
+    margin: 8px 0;
+  }
+
+  .word-tile {
+    width: 58px;
+    height: 68px;
+    background: var(--navy-mid);
+    border: 2px solid var(--gold-dim);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 32px;
+    color: var(--gold);
+    cursor: pointer;
+    transition: all 0.15s;
+    animation: pop 0.2s ease;
+  }
+  .word-tile:hover {
+    background: rgba(245,200,66,0.1);
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .word-tile.placeholder {
+    background: rgba(255,255,255,0.03);
+    border: 2px dashed rgba(255,255,255,0.1);
+    cursor: default;
+    animation: none;
+  }
+  .word-tile.placeholder:hover { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); color: transparent; }
+
+  /* ─── CALC STEPS (NUMBERS) ─── */
+  .calc-area {
+    width: 100%;
+    max-width: 520px;
+    background: var(--navy-mid);
+    border: 1px solid var(--tile-border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .step-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .step-num {
+    width: 36px;
+    height: 40px;
+    background: var(--tile-bg);
+    border: 1px solid var(--tile-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.12s;
+    color: var(--white);
+  }
+  .step-num.big { color: var(--gold); border-color: var(--gold-dim); }
+  .step-num.intermediate { color: var(--teal); border-color: rgba(42,181,192,0.4); }
+  .step-num:hover:not(.used-step) { border-color: var(--gold); color: var(--gold); }
+  .step-num.used-step { opacity: 0.2; cursor: default; }
+  .step-num.selected-step { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+
+  .op-btn {
+    width: 36px;
+    height: 40px;
+    background: var(--navy-light);
+    border: 1px solid var(--tile-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.12s;
+    color: var(--grey);
+  }
+  .op-btn:hover, .op-btn.selected-op { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+
+  .step-result {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--teal);
+    padding: 0 8px;
+  }
+
+  .step-display {
+    background: var(--navy);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--grey);
+    margin-bottom: 8px;
+  }
+  .step-display .step-line { color: var(--white); margin-bottom: 2px; }
+  .step-display .step-line span { color: var(--gold); }
+
+  /* ─── TARGET ─── */
+  .target-display {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 12vw, 88px);
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    text-shadow: 0 0 40px rgba(245,200,66,0.3);
+    line-height: 1;
+    text-align: center;
+  }
+  .target-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    color: var(--grey);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  /* ─── RESULTS ─── */
+  .result-banner {
+    background: var(--navy-mid);
+    border-radius: 10px;
+    padding: 24px 32px;
+    text-align: center;
+    border: 2px solid var(--tile-border);
+    width: 100%;
+    max-width: 480px;
+    margin: 16px 0;
+  }
+  .result-banner.success { border-color: var(--green); background: rgba(61,186,110,0.08); }
+  .result-banner.partial { border-color: var(--orange); background: rgba(232,114,42,0.08); }
+  .result-banner.miss { border-color: var(--red); background: rgba(232,64,64,0.08); }
+
+  .result-word {
+    font-family: var(--font-display);
+    font-size: 52px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .result-score {
+    font-family: var(--font-display);
+    font-size: 64px;
+    line-height: 1;
+    color: var(--green);
+  }
+  .result-score.partial { color: var(--orange); }
+  .result-score.miss { color: var(--red); }
+  .result-label { font-size: 13px; color: var(--grey); text-transform: uppercase; letter-spacing: 0.2em; margin-top: 4px; }
+
+  .ai-reveal {
+    background: rgba(42,181,192,0.08);
+    border: 1px solid rgba(42,181,192,0.25);
+    border-radius: 8px;
+    padding: 16px 20px;
+    width: 100%;
+    max-width: 480px;
+    margin: 8px 0;
+  }
+  .ai-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    color: var(--teal);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .ai-word { font-family: var(--font-display); font-size: 36px; color: var(--white); letter-spacing: 0.1em; }
+  .ai-solution-steps { font-family: var(--font-mono); font-size: 14px; color: var(--white); line-height: 1.7; }
+  .ai-solution-steps .eq { color: var(--teal); }
+
+  /* ─── SESSION SCORE BAR ─── */
+  .score-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(13,27,42,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+  }
+  .score-bar .logo-sm { font-family: var(--font-display); font-size: 22px; color: var(--gold); letter-spacing: 0.1em; }
+  .score-val {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--gold);
+    position: relative;
+  }
+  .score-delta {
+    position: absolute;
+    top: -20px;
+    right: 0;
+    font-size: 16px;
+    color: var(--green);
+    font-family: var(--font-display);
+    animation: scoreUp 1.5s ease forwards;
+    pointer-events: none;
+  }
+  .round-count { font-size: 12px; color: var(--grey); text-align: right; }
+
+  /* ─── LEADERBOARD ─── */
+  .lb-table {
+    width: 100%;
+    max-width: 500px;
+    border-collapse: collapse;
+  }
+  .lb-table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--grey);
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .lb-table td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 15px;
+  }
+  .lb-table tr:nth-child(1) td { color: var(--gold); }
+  .lb-table tr:nth-child(2) td { color: var(--white); }
+  .lb-table tr:nth-child(3) td { color: rgba(245,200,66,0.6); }
+  .lb-table .rank { font-family: var(--font-display); font-size: 22px; width: 40px; }
+  .lb-table .score-col { font-family: var(--font-display); font-size: 22px; text-align: right; }
+  .lb-table .date-col { font-size: 12px; color: var(--grey); text-align: right; }
+  .lb-empty { text-align: center; color: var(--grey); padding: 40px; font-size: 15px; }
+
+  /* ─── SETTINGS ─── */
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--navy-mid);
+    border: 1px solid var(--tile-border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    width: 100%;
+    max-width: 420px;
+  }
+  .setting-label { font-size: 15px; font-weight: 500; }
+  .setting-desc { font-size: 12px; color: var(--grey); margin-top: 2px; }
+
+  /* Toggle */
+  .toggle {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle input { display: none; }
+  .toggle-track {
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.12);
+    border-radius: 13px;
+    transition: background 0.2s;
+  }
+  .toggle input:checked + .toggle-track { background: var(--gold); }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .toggle input:checked ~ .toggle-thumb { transform: translateX(22px); }
+
+  /* ─── SETUP SCREEN ─── */
+  .setup-panel {
+    background: var(--navy-mid);
+    border: 1px solid var(--tile-border);
+    border-radius: 10px;
+    padding: 28px;
+    width: 100%;
+    max-width: 480px;
+    margin: 16px 0;
+  }
+  .setup-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+
+  .draw-btn-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .draw-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 6px;
+    border: 2px solid;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .draw-btn.vowel {
+    background: rgba(245,200,66,0.1);
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+  .draw-btn.vowel:hover:not(:disabled) { background: rgba(245,200,66,0.2); }
+  .draw-btn.consonant {
+    background: rgba(42,181,192,0.1);
+    border-color: rgba(42,181,192,0.5);
+    color: var(--teal);
+  }
+  .draw-btn.consonant:hover:not(:disabled) { background: rgba(42,181,192,0.2); }
+  .draw-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .constraint-hint {
+    font-size: 12px;
+    color: var(--grey);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .constraint-hint span { color: var(--gold); }
+
+  /* Big number selector */
+  .big-num-selector {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 16px 0;
+  }
+  .big-num-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    border: 2px solid var(--tile-border);
+    background: var(--tile-bg);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-size: 26px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .big-num-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .big-num-btn.active { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+
+  /* ─── PANEL HEADER ─── */
+  .panel-header {
+    text-align: center;
+    margin-bottom: 24px;
+    margin-top: 16px;
+  }
+  .panel-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 8vw, 52px);
+    letter-spacing: 0.12em;
+    color: var(--gold);
+  }
+  .panel-header p { font-size: 14px; color: var(--grey); margin-top: 4px; }
+
+  /* ─── MISC ─── */
+  .divider {
+    width: 100%;
+    max-width: 480px;
+    height: 1px;
+    background: rgba(255,255,255,0.07);
+    margin: 16px 0;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .tag-gold { background: rgba(245,200,66,0.15); color: var(--gold); }
+  .tag-teal { background: rgba(42,181,192,0.15); color: var(--teal); }
+  .tag-green { background: rgba(61,186,110,0.15); color: var(--green); }
+
+  .flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .flex-col { display: flex; flex-direction: column; align-items: center; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .text-center { text-align: center; }
+  .text-grey { color: var(--grey); }
+  .text-gold { color: var(--gold); }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-sm { font-size: 13px; }
+  .text-xs { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .mono { font-family: var(--font-mono); }
+
+  .session-summary {
+    background: var(--navy-mid);
+    border: 1px solid var(--tile-border);
+    border-radius: 10px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    margin: 16px 0;
+  }
+  .summary-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .summary-stat:last-child { border-bottom: none; }
+  .summary-val { font-family: var(--font-display); font-size: 26px; color: var(--gold); }
+
+  .name-input {
+    background: var(--navy);
+    border: 2px solid var(--tile-border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: var(--white);
+    text-align: center;
+    width: 100%;
+    max-width: 280px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .name-input:focus { border-color: var(--gold); }
+  .name-input::placeholder { color: var(--grey); }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 6px;
+    min-height: 18px;
+    animation: shake 0.3s ease;
+  }
+
+  .working-display {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: var(--navy);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-top: 8px;
+    width: 100%;
+    max-width: 520px;
+    min-height: 40px;
+    color: var(--teal);
+  }
+
+  @media (max-width: 480px) {
+    .mode-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .tile { width: 50px; height: 60px; font-size: 28px; }
+    .tile.letter-tile { font-size: 26px; }
+    .tile.number-tile { width: 56px; font-size: 22px; }
+    .score-bar { padding: 8px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="hidden" style="
+  position:fixed; inset:0; z-index:999;
+  background:rgba(13,27,42,0.97);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:20px;
+">
+  <div style="font-family:var(--font-display);font-size:52px;color:var(--gold);letter-spacing:0.1em;">COUNTDOWN</div>
+  <div id="loadingMsg" style="font-size:14px;color:var(--grey);letter-spacing:0.2em;text-transform:uppercase;">Loading dictionary…</div>
+  <div style="width:220px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;">
+    <div id="loadingBar" style="height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width 0.3s;animation:loadPulse 1.5s ease-in-out infinite;"></div>
+  </div>
+  <div style="font-size:12px;color:rgba(138,155,176,0.6);">First load only — cached after this</div>
+</div>
+
+<style>
+@keyframes loadPulse {
+  0%{width:5%} 50%{width:80%} 100%{width:95%}
+}
+</style>
+
+<!-- SCORE BAR (hidden initially) -->
+<div class="score-bar hidden" id="scoreBar">
+  <span class="logo-sm">COUNTDOWN</span>
+  <div class="flex-col" style="align-items:flex-end">
+    <div class="score-val" id="scoreBarVal">0
+      <span class="score-delta hidden" id="scoreDelta"></span>
+    </div>
+    <div class="round-count" id="roundCount">0 rounds</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: MAIN MENU
+══════════════════════════════════════════ -->
+<div class="screen" id="screenMenu">
+  <div class="flex-col" style="gap:6px; margin-bottom:8px">
+    <div class="logo">COUNTDOWN</div>
+    <div class="logo-sub">The Classic Word & Number Game</div>
+  </div>
+
+  <div class="mode-cards">
+    <div class="mode-card letters" onclick="startLettersSetup()">
+      <div class="mode-card-icon">🔤</div>
+      <div class="mode-card-title">LETTERS</div>
+      <div class="mode-card-desc">Find the longest word from 9 letters</div>
+    </div>
+    <div class="mode-card numbers" onclick="startNumbersSetup()">
+      <div class="mode-card-icon">🔢</div>
+      <div class="mode-card-title">NUMBERS</div>
+      <div class="mode-card-desc">Reach the target using 6 numbers</div>
+    </div>
+  </div>
+
+  <div class="flex-row mt-8">
+    <button class="btn btn-ghost btn-sm" onclick="showScreen('screenLeaderboard')">🏆 Leaderboard</button>
+    <button class="btn btn-ghost btn-sm" onclick="showScreen('screenSettings')">⚙️ Settings</button>
+    <button class="btn btn-ghost btn-sm" onclick="showEndSession()" id="btnEndSession" style="display:none">End Session</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: LETTERS SETUP
+══════════════════════════════════════════ -->
+<div class="screen hidden" id="screenLettersSetup">
+  <div class="panel-header">
+    <h2>LETTERS</h2>
+    <p>Choose your letters — at least 3 vowels and 4 consonants</p>
+  </div>
+
+  <div class="tiles-row" id="setupLetterTiles">
+    <!-- filled dynamically -->
+  </div>
+
+  <div class="constraint-hint">
+    Vowels: <span id="vowelCount">0</span>/9 &nbsp;·&nbsp; Consonants: <span id="consonantCount">0</span>/9 &nbsp;·&nbsp; Remaining: <span id="lettersRemaining">9</span>
+  </div>
+
+  <div class="setup-panel">
+    <div class="draw-btn-row">
+      <button class="draw-btn vowel" id="btnVowel" onclick="drawLetter('vowel')">+ Vowel</button>
+      <button class="draw-btn consonant" id="btnConsonant" onclick="drawLetter('consonant')">+ Consonant</button>
+    </div>
+    <button class="btn btn-ghost btn-sm btn-block" id="btnQuickPick" onclick="quickPick()" style="margin-bottom:10px;letter-spacing:0.08em">⚡ Quick Pick: 4 Vowels + 5 Consonants</button>
+    <div id="setupLetterHint" class="text-grey text-sm text-center" style="min-height:18px"></div>
+  </div>
+
+  <div class="flex-row mt-16">
+    <button class="btn btn-gold" id="btnStartLetters" onclick="startLettersGame()" disabled>Start Round</button>
+    <button class="btn btn-outline" onclick="goToMenu()">← Back</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: LETTERS GAME
+══════════════════════════════════════════ -->
+<div class="screen hidden" id="screenLetters" style="padding-top:80px">
+  <div class="panel-header">
+    <h2>LETTERS</h2>
+  </div>
+
+  <!-- Timer -->
+  <div id="timerWrapL" class="timer-wrap">
+    <svg class="timer-svg" width="100" height="100" viewBox="0 0 100 100">
+      <circle class="timer-track" cx="50" cy="50" r="44"/>
+      <circle class="timer-bar" id="timerBarL" cx="50" cy="50" r="44"
+        stroke-dasharray="276.5" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-num" id="timerNumL">30</div>
+  </div>
+
+  <!-- Available tiles -->
+  <div class="tiles-row" id="gameTilesL"></div>
+
+  <!-- Word being built -->
+  <div class="word-display" id="wordDisplay"></div>
+
+  <div class="error-msg" id="letterError"></div>
+
+  <div class="flex-row mt-8">
+    <button class="btn btn-gold" onclick="submitLetters()" id="btnSubmitLetters">Submit Word</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearWord()">Clear</button>
+  </div>
+
+  <div class="text-grey text-xs mt-8 text-center">Click tiles to build your word · Click word tiles to remove</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: NUMBERS SETUP
+══════════════════════════════════════════ -->
+<div class="screen hidden" id="screenNumbersSetup">
+  <div class="panel-header">
+    <h2>NUMBERS</h2>
+    <p>How many big numbers? (25, 50, 75, 100)</p>
+  </div>
+
+  <div class="big-num-selector">
+    <button class="big-num-btn" onclick="selectBigCount(1)" id="bigBtn1">1</button>
+    <button class="big-num-btn" onclick="selectBigCount(2)" id="bigBtn2">2</button>
+    <button class="big-num-btn" onclick="selectBigCount(3)" id="bigBtn3">3</button>
+    <button class="big-num-btn" onclick="selectBigCount(4)" id="bigBtn4">4</button>
+  </div>
+
+  <div class="text-grey text-sm text-center" style="margin-bottom:16px">
+    Remaining <span id="smallNumCount">6</span> drawn from small numbers (1–10)
+  </div>
+
+  <div class="flex-row mt-16">
+    <button class="btn btn-gold" id="btnStartNumbers" onclick="startNumbersGame()" disabled>Start Round</button>
+    <button class="btn btn-outline" onclick="goToMenu()">← Back</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: NUMBERS GAME
+══════════════════════════════════════════ -->
+<div class="screen hidden" id="screenNumbers" style="padding-top:80px">
+  <div class="panel-header" style="margin-bottom:8px">
+    <h2>NUMBERS</h2>
+  </div>
+
+  <div class="target-label">TARGET</div>
+  <div class="target-display" id="targetDisplay">---</div>
+
+  <!-- Timer -->
+  <div id="timerWrapN" class="timer-wrap" style="margin:8px auto">
+    <svg class="timer-svg" width="100" height="100" viewBox="0 0 100 100">
+      <circle class="timer-track" cx="50" cy="50" r="44"/>
+      <circle class="timer-bar" id="timerBarN" cx="50" cy="50" r="44"
+        stroke-dasharray="276.5" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-num" id="timerNumN">30</div>
+  </div>
+
+  <!-- Available numbers -->
+  <div class="tiles-row" id="gameTilesN"></div>
+
+  <!-- Calc area -->
+  <div class="calc-area" id="calcArea">
+    <div class="text-xs text-grey" style="margin-bottom:8px">SELECT: number · operator · number · then press =</div>
+    <div class="step-row" id="calcInputRow">
+      <!-- Dynamically: selectable numbers + operators -->
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+      <button class="btn btn-gold btn-sm" onclick="applyStep()" id="btnEquals">= Calculate</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearStep()">Clear Step</button>
+      <button class="btn btn-ghost btn-sm" onclick="undoStep()">↩ Undo</button>
+    </div>
+    <div class="working-display" id="workingDisplay">Your working will appear here…</div>
+  </div>
+
+  <div class="error-msg" id="numbersError"></div>
+
+  <div class="flex-row mt-8">
+    <button class="btn btn-gold" onclick="submitNumbers()" id="btnSubmitNumbers">Submit Answer</button>
+    <button class="btn btn-ghost btn-sm" onclick="resetNumbers()">Reset All</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: RESULT
+══════════════════════════════════════════ -->
+<div class="screen hidden" id="screenResult" style="padding-top:80px">
+  <div class="panel-header">
+    <h2 id="resultModeTitle">RESULT</h2>
+  </div>
+
+  <div class="result-banner" id="resultBanner">
+    <div class="result-word" id="resultWord"></div>
+    <div class="result-score" id="resultScore">0</div>
+    <div class="result-label" id="resultLabel"></div>
+  </div>
+
+  <div id="resultLettersRow" class="tiles-row" style="display:none;margin:8px 0 4px"></div>
+
+  <div class="ai-reveal" id="aiReveal">
+    <div class="ai-label">⚡ Best Possible Answer</div>
+    <div id="aiContent"></div>
+  </div>
+
+  <div class="flex-row mt-16">
+    <button class="btn btn-gold" id="btnPlayAgain" onclick="playAgain()">Play Again</button>
+    <button class="btn btn-outline" onclick="switchMode()">Switch Mode</button>
+    <button class="btn btn-ghost btn-sm" onclick="goToMenu()">Menu</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: LEADERBOARD
+══════════════════════════════════════════ -->
+<div class="screen hidden" id="screenLeaderboard">
+  <div class="panel-header">
+    <h2>🏆 LEADERBOARD</h2>
+    <p>Top session scores</p>
+  </div>
+
+  <table class="lb-table" id="lbTable">
+    <thead>
+      <tr>
+        <th class="rank">#</th>
+        <th>Player</th>
+        <th class="score-col">Score</th>
+        <th class="date-col">Date</th>
+      </tr>
+    </thead>
+    <tbody id="lbBody"></tbody>
+  </table>
+
+  <div class="flex-row mt-24">
+    <button class="btn btn-outline" onclick="goToMenu()">← Back</button>
+    <button class="btn btn-danger btn-sm" onclick="clearLeaderboard()">Clear Board</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: SETTINGS
+══════════════════════════════════════════ -->
+<div class="screen hidden" id="screenSettings">
+  <div class="panel-header">
+    <h2>⚙️ SETTINGS</h2>
+  </div>
+
+  <div class="setting-row">
+    <div>
+      <div class="setting-label">Countdown Timer</div>
+      <div class="setting-desc">30-second timer per round</div>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="settingTimer" onchange="saveSetting('timer', this.checked)" checked>
+      <div class="toggle-track"></div>
+      <div class="toggle-thumb"></div>
+    </label>
+  </div>
+
+  <div class="setting-row">
+    <div>
+      <div class="setting-label">Sound Effects</div>
+      <div class="setting-desc">Ticking clock sound during timer</div>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="settingSound" onchange="saveSetting('sound', this.checked)" checked>
+      <div class="toggle-track"></div>
+      <div class="toggle-thumb"></div>
+    </label>
+  </div>
+
+  <div class="flex-row mt-24">
+    <button class="btn btn-outline" onclick="goToMenu()">← Back</button>
+    <button class="btn btn-danger btn-sm" onclick="clearLeaderboard()">Clear Leaderboard</button>
+  </div>
+  
+
+   <div class="setting-desc"><br/><br/><br/>Last Update: <span id="lastModified"></span>
+  
+
+    <script>
+        // Function to display the last modified date and time
+        function displayLastModified() {
+            // Get the last modified date string
+            var lastModifiedDate = document.lastModified;
+
+            // Optional: Format the date string into a more readable local time format
+            var formattedDate = new Date(lastModifiedDate).toLocaleString();
+
+            // Insert the date into the HTML element
+            document.getElementById("lastModified").textContent = formattedDate;
+        }
+
+        // Call the function when the page loads
+        window.onload = displayLastModified;
+    </script>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: END SESSION
+══════════════════════════════════════════ -->
+<div class="screen hidden" id="screenEndSession">
+  <div class="panel-header">
+    <h2>SESSION COMPLETE</h2>
+    <p>Enter your name to save your score</p>
+  </div>
+
+  <div class="session-summary" id="sessionSummary"></div>
+
+  <input type="text" class="name-input mt-16" id="playerNameInput" placeholder="Your name" maxlength="20">
+
+  <div class="flex-row mt-16">
+    <button class="btn btn-gold" onclick="saveScore()">Save Score</button>
+    <button class="btn btn-outline" onclick="newSession()">Skip & New Game</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// WORD LIST — a compact built-in dictionary
+// We use a curated set of common English words
+// plus a frequency-filtered open-source list.
+// ════════════════════════════════════════════
+
+// We'll use a Bloom-filter-like approach: store words as a Set
+// The word list is loaded inline (abbreviated here for key words,
+// but we'll generate a comprehensive one from common sources)
+
+const WORD_LIST = new Set();
+let wordListReady = false;
+let wordListCallbacks = [];
+
+function onWordListReady(fn) {
+  if (wordListReady) fn();
+  else wordListCallbacks.push(fn);
+}
+
+// ── LETTER FREQUENCY POOLS (based on Countdown show) ──
+const VOWEL_POOL = [
+  ...Array(15).fill('A'),
+  ...Array(21).fill('E'),
+  ...Array(13).fill('I'),
+  ...Array(13).fill('O'),
+  ...Array(5).fill('U')
+];
+
+const CONSONANT_POOL = [
+  ...Array(2).fill('B'),
+  ...Array(3).fill('C'),
+  ...Array(6).fill('D'),
+  ...Array(2).fill('F'),
+  ...Array(4).fill('G'),
+  ...Array(4).fill('H'),
+  ...Array(1).fill('J'),
+  ...Array(1).fill('K'),
+  ...Array(5).fill('L'),
+  ...Array(4).fill('M'),
+  ...Array(8).fill('N'),
+  ...Array(1).fill('P'), // actually 4 in real countdown, keeping common
+  ...Array(4).fill('P'),
+  ...Array(1).fill('Q'),
+  ...Array(9).fill('R'),
+  ...Array(9).fill('S'),
+  ...Array(9).fill('T'),
+  ...Array(1).fill('V'),
+  ...Array(2).fill('W'),
+  ...Array(1).fill('X'),
+  ...Array(1).fill('Y'),
+  ...Array(1).fill('Z'),
+];
+
+// ── GAME STATE ──
+let state = {
+  screen: 'menu',
+  session: { score: 0, rounds: 0, lettersRounds: 0, numbersRounds: 0, best: 0 },
+  settings: { timer: true, sound: true },
+  lastMode: 'letters',
+  // Letters game state
+  letters: {
+    pool: [],
+    drawnTiles: [],
+    vowelCount: 0,
+    consonantCount: 0,
+    selectedIndices: [],
+    timerInterval: null,
+    timeLeft: 30,
+    submitted: false,
+  },
+  // Numbers game state
+  numbers: {
+    tiles: [],
+    isBig: [],
+    target: 0,
+    bigCount: 0,
+    steps: [],           // [{a, op, b, result, label}]
+    availableNums: [],   // current numbers available (includes intermediates)
+    availableIsBig: [],
+    usedOriginal: [],    // which original indices used
+    selectedA: null,
+    selectedOp: null,
+    timerInterval: null,
+    timeLeft: 30,
+    submitted: false,
+  }
+};
+
+// ── AUDIO (simple tone generator) ──
+let audioCtx = null;
+let tickInterval = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTick() {
+  if (!state.settings.sound) return;
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+function playSuccess() {
+  if (!state.settings.sound) return;
+  try {
+    const ctx = getAudioCtx();
+    [523, 659, 784, 1047].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.1;
+      gain.gain.setValueAtTime(0.1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.start(t); osc.stop(t + 0.25);
+    });
+  } catch(e) {}
+}
+
+// ── SETTINGS ──
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('countdown_settings') || '{}');
+    state.settings = { timer: s.timer !== false, sound: s.sound !== false };
+    document.getElementById('settingTimer').checked = state.settings.timer;
+    document.getElementById('settingSound').checked = state.settings.sound;
+  } catch(e) {}
+}
+function saveSetting(key, val) {
+  state.settings[key] = val;
+  localStorage.setItem('countdown_settings', JSON.stringify(state.settings));
+}
+
+// ── LEADERBOARD ──
+function getLeaderboard() {
+  try { return JSON.parse(localStorage.getItem('countdown_lb') || '[]'); } catch(e) { return []; }
+}
+function saveLeaderboard(lb) {
+  localStorage.setItem('countdown_lb', JSON.stringify(lb));
+}
+function addScore(name, score, rounds) {
+  const lb = getLeaderboard();
+  lb.push({ name, score, rounds, date: new Date().toLocaleDateString() });
+  lb.sort((a,b) => b.score - a.score);
+  lb.splice(10);
+  saveLeaderboard(lb);
+}
+function clearLeaderboard() {
+  if (!confirm('Clear the entire leaderboard?')) return;
+  localStorage.removeItem('countdown_lb');
+  renderLeaderboard();
+}
+function renderLeaderboard() {
+  const lb = getLeaderboard();
+  const tbody = document.getElementById('lbBody');
+  if (!lb.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="lb-empty">No scores yet. Play some rounds!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lb.map((e, i) => `
+    <tr>
+      <td class="rank">${['🥇','🥈','🥉'][i] || (i+1)}</td>
+      <td>${e.name || 'Anonymous'}</td>
+      <td class="score-col">${e.score}</td>
+      <td class="date-col">${e.date}</td>
+    </tr>
+  `).join('');
+}
+
+// ── SCREEN MANAGEMENT ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+  state.screen = id;
+
+  const inGame = !['screenMenu','screenLeaderboard','screenSettings','screenEndSession'].includes(id);
+  document.getElementById('scoreBar').classList.toggle('hidden', !inGame && state.session.rounds === 0);
+
+  if (id === 'screenLeaderboard') renderLeaderboard();
+  if (id !== 'screenMenu') {
+    document.getElementById('btnEndSession').style.display = state.session.rounds > 0 ? 'inline-flex' : 'none';
+  }
+}
+
+function goToMenu() {
+  stopTimer('L'); stopTimer('N');
+  showScreen('screenMenu');
+  document.getElementById('scoreBar').classList.toggle('hidden', state.session.rounds === 0);
+  document.getElementById('btnEndSession').style.display = state.session.rounds > 0 ? 'inline-flex' : 'none';
+}
+
+// ── SESSION SCORING ──
+function addToSession(points) {
+  state.session.score += points;
+  state.session.rounds++;
+  updateScoreBar(points);
+}
+function updateScoreBar(delta) {
+  document.getElementById('scoreBarVal').childNodes[0].textContent = state.session.score;
+  document.getElementById('roundCount').textContent = `${state.session.rounds} round${state.session.rounds !== 1 ? 's' : ''}`;
+  document.getElementById('scoreBar').classList.remove('hidden');
+  if (delta > 0) {
+    const el = document.getElementById('scoreDelta');
+    el.textContent = `+${delta}`;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 1500);
+  }
+}
+
+// ══════════════════════════════════════════
+// LETTERS GAME
+// ══════════════════════════════════════════
+
+function startLettersSetup() {
+  state.lastMode = 'letters';
+  state.letters = {
+    pool: [...VOWEL_POOL],
+    consonantPoolLeft: [...CONSONANT_POOL],
+    vowelPoolLeft: [...VOWEL_POOL],
+    drawnTiles: [],
+    vowelCount: 0,
+    consonantCount: 0,
+    selectedIndices: [],
+    timerInterval: null,
+    timeLeft: 30,
+    submitted: false,
+  };
+  renderSetupTiles();
+  updateConstraintHint();
+  document.getElementById('btnStartLetters').disabled = true;
+  document.getElementById('btnVowel').disabled = false;
+  document.getElementById('btnConsonant').disabled = false;
+  document.getElementById('btnQuickPick').style.display = '';
+  showScreen('screenLettersSetup');
+}
+
+function quickPick() {
+  // Reset to a clean state first, then draw 4 vowels + 5 consonants
+  startLettersSetup();
+  for (let i = 0; i < 4; i++) drawLetter('vowel');
+  for (let i = 0; i < 5; i++) drawLetter('consonant');
+}
+
+function drawLetter(type) {
+  const ls = state.letters;
+  if (ls.drawnTiles.length >= 9) return;
+
+  let pool = type === 'vowel' ? ls.vowelPoolLeft : ls.consonantPoolLeft;
+  if (!pool.length) return;
+
+  const idx = Math.floor(Math.random() * pool.length);
+  const letter = pool[idx];
+  pool.splice(idx, 1);
+
+  ls.drawnTiles.push({ letter, type });
+  document.getElementById('btnQuickPick').style.display = 'none';
+  if (type === 'vowel') ls.vowelCount++;
+  else ls.consonantCount++;
+
+  renderSetupTiles();
+  updateConstraintHint();
+
+  // Check if we can start
+  const canStart = ls.drawnTiles.length === 9 &&
+    ls.vowelCount >= 3 && ls.consonantCount >= 4;
+  document.getElementById('btnStartLetters').disabled = !canStart || ls.drawnTiles.length < 9;
+
+  // Auto-enforce constraints: if we need to force remaining
+  const remaining = 9 - ls.drawnTiles.length;
+  const needVowels = Math.max(0, 3 - ls.vowelCount);
+  const needConsonants = Math.max(0, 4 - ls.consonantCount);
+
+  document.getElementById('btnVowel').disabled = remaining === 0 ||
+    (remaining <= needConsonants && needConsonants > 0) ||
+    ls.vowelPoolLeft.length === 0;
+  document.getElementById('btnConsonant').disabled = remaining === 0 ||
+    (remaining <= needVowels && needVowels > 0) ||
+    ls.consonantPoolLeft.length === 0;
+
+  if (ls.drawnTiles.length === 9) {
+    document.getElementById('btnStartLetters').disabled = false;
+  }
+}
+
+function renderSetupTiles() {
+  const ls = state.letters;
+  const container = document.getElementById('setupLetterTiles');
+  const tiles = ls.drawnTiles.map((t, i) => `
+    <div class="tile letter-tile ${t.type} revealed" style="animation-delay:${i*0.05}s">
+      ${t.letter}
+    </div>
+  `).join('');
+  const empties = Array(9 - ls.drawnTiles.length).fill('<div class="tile empty"></div>').join('');
+  container.innerHTML = tiles + empties;
+}
+
+function updateConstraintHint() {
+  const ls = state.letters;
+  document.getElementById('vowelCount').textContent = ls.vowelCount;
+  document.getElementById('consonantCount').textContent = ls.consonantCount;
+  document.getElementById('lettersRemaining').textContent = 9 - ls.drawnTiles.length;
+
+  let hint = '';
+  const rem = 9 - ls.drawnTiles.length;
+  const needV = Math.max(0, 3 - ls.vowelCount);
+  const needC = Math.max(0, 4 - ls.consonantCount);
+  if (rem > 0) {
+    if (needV > 0) hint = `Need at least ${needV} more vowel${needV>1?'s':''}`;
+    else if (needC > 0) hint = `Need at least ${needC} more consonant${needC>1?'s':''}`;
+    else hint = 'Draw any remaining letters freely';
+  }
+  document.getElementById('setupLetterHint').textContent = hint;
+}
+
+function startLettersGame() {
+  if (!wordListReady) {
+    showLoadingOverlay('Loading dictionary…');
+    onWordListReady(() => { hideLoadingOverlay(); startLettersGame(); });
+    return;
+  }
+  const ls = state.letters;
+  ls.selectedIndices = [];
+  ls.submitted = false;
+  ls.timeLeft = 30;
+
+  // Render tiles
+  const container = document.getElementById('gameTilesL');
+  container.innerHTML = ls.drawnTiles.map((t, i) =>
+    `<div class="tile letter-tile clickable ${t.type}" id="ltile${i}" onclick="selectLetter(${i})"
+      style="animation:flip 0.3s ease ${i*0.05}s both">${t.letter}</div>`
+  ).join('');
+
+  renderWordDisplay();
+  document.getElementById('letterError').textContent = '';
+  showScreen('screenLetters');
+
+  const timerWrapL = document.getElementById('timerWrapL');
+  if (state.settings.timer) { timerWrapL.style.display = ''; startTimer('L'); }
+  else timerWrapL.style.display = 'none';
+}
+
+function selectLetter(i) {
+  const ls = state.letters;
+  if (ls.submitted) return;
+  if (ls.selectedIndices.includes(i)) return;
+  if (document.getElementById('ltile' + i).classList.contains('used')) return;
+
+  ls.selectedIndices.push(i);
+  document.getElementById('ltile' + i).classList.add('used');
+  renderWordDisplay();
+  document.getElementById('letterError').textContent = '';
+}
+
+function removeLetter(pos) {
+  const ls = state.letters;
+  if (ls.submitted) return;
+  const tileIdx = ls.selectedIndices[pos];
+  ls.selectedIndices.splice(pos, 1);
+  document.getElementById('ltile' + tileIdx).classList.remove('used');
+  renderWordDisplay();
+}
+
+function clearWord() {
+  const ls = state.letters;
+  if (ls.submitted) return;
+  ls.selectedIndices.forEach(i => document.getElementById('ltile' + i).classList.remove('used'));
+  ls.selectedIndices = [];
+  renderWordDisplay();
+  document.getElementById('letterError').textContent = '';
+}
+
+function renderWordDisplay() {
+  const ls = state.letters;
+  const container = document.getElementById('wordDisplay');
+  const wordTiles = ls.selectedIndices.map((idx, pos) =>
+    `<div class="word-tile" onclick="removeLetter(${pos})">${ls.drawnTiles[idx].letter}</div>`
+  ).join('');
+  const placeholders = Array(Math.max(0, 3 - ls.selectedIndices.length))
+    .fill('<div class="word-tile placeholder"></div>').join('');
+  container.innerHTML = wordTiles + (ls.selectedIndices.length < 9 ? placeholders : '');
+}
+
+function submitLetters() {
+  const ls = state.letters;
+  if (ls.submitted) return;
+  if (ls.selectedIndices.length < 1) {
+    showLetterError('Select at least one letter!');
+    return;
+  }
+
+  stopTimer('L');
+  ls.submitted = true;
+
+  const word = ls.selectedIndices.map(i => ls.drawnTiles[i].letter).join('').toLowerCase();
+  const allLetters = ls.drawnTiles.map(t => t.letter);
+  const valid = isValidWord(word, allLetters);
+
+  let score = 0;
+  let label = '';
+  let bannerClass = 'miss';
+
+  if (!valid && ls.selectedIndices.length > 0) {
+    label = word.toUpperCase() + ' is not a valid word';
+  } else if (valid) {
+    score = word.length === 9 ? 18 : word.length;
+    label = word.length === 9 ? '🌟 Nine letters! Double score!' : `${word.length}-letter word`;
+    bannerClass = 'success';
+    playSuccess();
+  }
+
+  // AI reveal
+  const wordGroups = findBestWords(allLetters);
+
+  // Save to session
+  if (state.session.rounds === 0) state.session.lettersRounds = 0;
+  state.session.lettersRounds++;
+  if (score > state.session.best) state.session.best = score;
+  addToSession(score);
+
+  // Show result
+  showResult({
+    mode: 'letters',
+    word: word.toUpperCase(),
+    score,
+    label,
+    bannerClass,
+    valid,
+    wordGroups,
+    allLetters
+  });
+}
+
+function showLetterError(msg) {
+  const el = document.getElementById('letterError');
+  el.textContent = msg;
+  el.style.animation = 'none';
+  requestAnimationFrame(() => { el.style.animation = ''; el.style.animation = 'shake 0.3s ease'; });
+}
+
+function isValidWord(word, availableLetters) {
+  if (word.length < 2) return false;
+  if (!WORD_LIST.has(word)) return false;
+  // Check letters are available
+  const avail = availableLetters.map(l => l.toLowerCase());
+  const used = [];
+  for (const ch of word) {
+    const idx = avail.indexOf(ch, 0);
+    // find unused occurrence
+    let found = -1;
+    for (let i = 0; i < avail.length; i++) {
+      if (avail[i] === ch && !used.includes(i)) { found = i; break; }
+    }
+    if (found === -1) return false;
+    used.push(found);
+  }
+  return true;
+}
+
+function findBestWords(letters) {
+  const avail = letters.map(l => l.toLowerCase());
+  // grouped[len] = array of words of that length
+  const grouped = {};
+
+  for (const word of WORD_LIST) {
+    if (word.length < 6 || word.length > 9) continue;
+    if (canMakeWord(word, avail)) {
+      if (!grouped[word.length]) grouped[word.length] = [];
+      grouped[word.length].push(word);
+    }
+  }
+
+  // Sort each group alphabetically, cap at 20 per length
+  for (const len of Object.keys(grouped)) {
+    grouped[len].sort();
+    if (grouped[len].length > 20) grouped[len] = grouped[len].slice(0, 20);
+  }
+
+  return grouped;
+}
+
+function canMakeWord(word, avail) {
+  const pool = [...avail];
+  for (const ch of word) {
+    const idx = pool.indexOf(ch);
+    if (idx === -1) return false;
+    pool.splice(idx, 1);
+  }
+  return true;
+}
+
+// ══════════════════════════════════════════
+// NUMBERS GAME
+// ══════════════════════════════════════════
+
+function startNumbersSetup() {
+  state.lastMode = 'numbers';
+  state.numbers.bigCount = 0;
+  document.querySelectorAll('.big-num-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('smallNumCount').textContent = 6;
+  document.getElementById('btnStartNumbers').disabled = true;
+  showScreen('screenNumbersSetup');
+}
+
+function selectBigCount(n) {
+  state.numbers.bigCount = n;
+  document.querySelectorAll('.big-num-btn').forEach((b, i) => {
+    b.classList.toggle('active', i + 1 === n);
+  });
+  document.getElementById('smallNumCount').textContent = 6 - n;
+  document.getElementById('btnStartNumbers').disabled = false;
+}
+
+function startNumbersGame() {
+  const ns = state.numbers;
+  const bigCount = ns.bigCount;
+
+  // Draw big numbers
+  const bigPool = [25, 50, 75, 100];
+  shuffle(bigPool);
+  const bigs = bigPool.slice(0, bigCount);
+
+  // Draw small numbers
+  const smallPool = [];
+  for (let i = 1; i <= 10; i++) { smallPool.push(i, i); }
+  shuffle(smallPool);
+  const smalls = smallPool.slice(0, 6 - bigCount);
+
+  const allNums = [...bigs, ...smalls];
+  const isBig = [...Array(bigCount).fill(true), ...Array(6 - bigCount).fill(false)];
+
+  ns.tiles = allNums;
+  ns.isBig = isBig;
+  ns.target = Math.floor(Math.random() * 900) + 100;
+  ns.steps = [];
+  ns.availableNums = allNums.map((v, i) => ({ val: v, origIdx: i, isIntermediate: false, isBig: isBig[i] }));
+  ns.usedOriginal = [];
+  ns.selectedA = null;
+  ns.selectedOp = null;
+  ns.submitted = false;
+  ns.timeLeft = 30;
+
+  document.getElementById('targetDisplay').textContent = ns.target;
+  renderNumberTiles();
+  renderCalcInputRow();
+  document.getElementById('workingDisplay').textContent = 'Your working will appear here…';
+  document.getElementById('numbersError').textContent = '';
+  showScreen('screenNumbers');
+
+  const timerWrapN = document.getElementById('timerWrapN');
+  if (state.settings.timer) { timerWrapN.style.display = ''; startTimer('N'); }
+  else timerWrapN.style.display = 'none';
+}
+
+function renderNumberTiles() {
+  const ns = state.numbers;
+  const container = document.getElementById('gameTilesN');
+  container.innerHTML = ns.tiles.map((v, i) =>
+    `<div class="tile number-tile ${ns.isBig[i] ? 'big' : ''}"
+      style="animation:flip 0.3s ease ${i*0.08}s both">${v}</div>`
+  ).join('');
+}
+
+function renderCalcInputRow() {
+  const ns = state.numbers;
+  const row = document.getElementById('calcInputRow');
+
+  const numBtns = ns.availableNums.map((n, i) => {
+    const cls = ['step-num'];
+    if (n.isIntermediate) cls.push('intermediate');
+    else if (n.isBig) cls.push('big');
+    if (ns.selectedA === i) cls.push('selected-step');
+    return `<div class="${cls.join(' ')}" onclick="selectNum(${i})">${n.val}</div>`;
+  }).join('');
+
+  const ops = ['+', '−', '×', '÷'].map(op =>
+    `<div class="op-btn ${ns.selectedOp === op ? 'selected-op' : ''}" onclick="selectOp('${op}')">${op}</div>`
+  ).join('');
+
+  row.innerHTML = numBtns + '<div style="margin:0 4px;color:var(--grey)">|</div>' + ops;
+}
+
+function selectNum(i) {
+  const ns = state.numbers;
+  if (ns.submitted) return;
+
+  if (ns.selectedA === null) {
+    ns.selectedA = i;
+  } else if (ns.selectedA === i) {
+    ns.selectedA = null;
+  } else if (ns.selectedOp !== null) {
+    // We have A and op, this is B — apply
+    applyStepWith(i);
+    return;
+  } else {
+    // Reselect A
+    ns.selectedA = i;
+  }
+  renderCalcInputRow();
+}
+
+function selectOp(op) {
+  const ns = state.numbers;
+  if (ns.submitted) return;
+  ns.selectedOp = ns.selectedOp === op ? null : op;
+  renderCalcInputRow();
+}
+
+function applyStep() {
+  const ns = state.numbers;
+  if (ns.selectedA === null) {
+    document.getElementById('numbersError').textContent = 'Select a number first.';
+  } else if (ns.selectedOp === null) {
+    document.getElementById('numbersError').textContent = 'Select an operator (+, −, ×, ÷).';
+  } else {
+    document.getElementById('numbersError').textContent = 'Now click a second number to complete the calculation.';
+  }
+}
+
+function applyStepWith(bIdx) {
+  const ns = state.numbers;
+  if (ns.selectedA === null || ns.selectedOp === null) {
+    document.getElementById('numbersError').textContent = 'Select a number and operator first.';
+    return;
+  }
+
+  const aEntry = ns.availableNums[ns.selectedA];
+  const bEntry = ns.availableNums[bIdx];
+  const a = aEntry.val;
+  const b = bEntry.val;
+  const op = ns.selectedOp;
+  document.getElementById('numbersError').textContent = '';
+
+  let result;
+  if (op === '+') result = a + b;
+  else if (op === '−') result = a - b;
+  else if (op === '×') result = a * b;
+  else if (op === '÷') result = b === 0 ? null : a / b;
+
+  if (result === null || !Number.isInteger(result) || result <= 0) {
+    document.getElementById('numbersError').textContent =
+      result === null ? 'Cannot divide by zero.' :
+      !Number.isInteger(result) ? 'Result must be a whole number.' :
+      'Result must be positive.';
+    document.getElementById('numbersError').style.animation = 'none';
+    requestAnimationFrame(() => { document.getElementById('numbersError').style.animation = 'shake 0.3s ease'; });
+    return;
+  }
+
+  const stepLabel = `${a} ${op} ${b} = ${result}`;
+  ns.steps.push({ a, op, b, result, label: stepLabel, aIdx: ns.selectedA, bIdx });
+
+  // Remove used numbers, add result
+  const newAvail = ns.availableNums.filter((_, i) => i !== ns.selectedA && i !== bIdx);
+  newAvail.push({ val: result, origIdx: -1, isIntermediate: true, isBig: false });
+  ns.availableNums = newAvail;
+  ns.selectedA = null;
+  ns.selectedOp = null;
+
+  renderCalcInputRow();
+  updateWorkingDisplay();
+}
+
+function clearStep() {
+  const ns = state.numbers;
+  ns.selectedA = null;
+  ns.selectedOp = null;
+  document.getElementById('numbersError').textContent = '';
+  renderCalcInputRow();
+}
+
+function undoStep() {
+  const ns = state.numbers;
+  if (!ns.steps.length) return;
+  // Rebuild state from scratch
+  const savedSteps = ns.steps.slice(0, -1);
+  ns.steps = [];
+  ns.availableNums = ns.tiles.map((v, i) => ({ val: v, origIdx: i, isIntermediate: false, isBig: ns.isBig[i] }));
+  ns.selectedA = null;
+  ns.selectedOp = null;
+
+  for (const step of savedSteps) {
+    // Re-find the indices by value
+    const aIdx = ns.availableNums.findIndex(n => n.val === step.a);
+    if (aIdx === -1) { ns.steps = []; ns.availableNums = ns.tiles.map((v,i) => ({val:v,origIdx:i,isIntermediate:false,isBig:ns.isBig[i]})); break; }
+    ns.selectedA = aIdx;
+    ns.selectedOp = step.op;
+    const bIdx = ns.availableNums.findIndex((n, i) => i !== aIdx && n.val === step.b);
+    if (bIdx === -1) { ns.steps = []; ns.availableNums = ns.tiles.map((v,i) => ({val:v,origIdx:i,isIntermediate:false,isBig:ns.isBig[i]})); break; }
+    applyStepWith(bIdx);
+  }
+
+  renderCalcInputRow();
+  updateWorkingDisplay();
+}
+
+function updateWorkingDisplay() {
+  const ns = state.numbers;
+  if (!ns.steps.length) {
+    document.getElementById('workingDisplay').textContent = 'Your working will appear here…';
+    return;
+  }
+  document.getElementById('workingDisplay').innerHTML =
+    ns.steps.map(s => `<div>${s.a} ${s.op} ${s.b} <span style="color:var(--gold)">= ${s.result}</span></div>`).join('');
+}
+
+function resetNumbers() {
+  const ns = state.numbers;
+  ns.steps = [];
+  ns.availableNums = ns.tiles.map((v, i) => ({ val: v, origIdx: i, isIntermediate: false, isBig: ns.isBig[i] }));
+  ns.selectedA = null;
+  ns.selectedOp = null;
+  document.getElementById('numbersError').textContent = '';
+  renderCalcInputRow();
+  updateWorkingDisplay();
+}
+
+function submitNumbers() {
+  const ns = state.numbers;
+  if (ns.submitted) return;
+  stopTimer('N');
+  ns.submitted = true;
+
+  // Find best result from steps
+  let bestResult = null;
+  let bestStep = null;
+  for (const s of ns.steps) {
+    if (bestResult === null || Math.abs(s.result - ns.target) < Math.abs(bestResult - ns.target)) {
+      bestResult = s.result;
+      bestStep = s;
+    }
+  }
+  // Also check any available number that equals target
+  for (const n of ns.availableNums) {
+    if (bestResult === null || Math.abs(n.val - ns.target) < Math.abs(bestResult - ns.target)) {
+      bestResult = n.val;
+    }
+  }
+
+  const diff = bestResult !== null ? Math.abs(bestResult - ns.target) : Infinity;
+  let score = 0;
+  let label = '';
+  let bannerClass = 'miss';
+
+  if (bestResult === null) {
+    label = 'No answer submitted';
+  } else if (diff === 0) {
+    score = 10;
+    label = `Exact! ${bestResult} = ${ns.target}`;
+    bannerClass = 'success';
+    playSuccess();
+  } else if (diff <= 5) {
+    score = 7;
+    label = `${diff} away from ${ns.target}`;
+    bannerClass = 'partial';
+  } else if (diff <= 10) {
+    score = 5;
+    label = `${diff} away from ${ns.target}`;
+    bannerClass = 'partial';
+  } else {
+    label = bestResult !== null ? `${diff} away — too far` : 'No answer';
+  }
+
+  // AI solver
+  const aiSolution = solveNumbers(ns.tiles, ns.target);
+
+  if (score > state.session.best) state.session.best = score;
+  state.session.numbersRounds = (state.session.numbersRounds || 0) + 1;
+  addToSession(score);
+
+  showResult({
+    mode: 'numbers',
+    word: bestResult !== null ? String(bestResult) : '—',
+    score,
+    label,
+    bannerClass,
+    target: ns.target,
+    steps: ns.steps,
+    aiSolution
+  });
+}
+
+// ══════════════════════════════════════════
+// NUMBERS SOLVER (AI reveal)
+// ══════════════════════════════════════════
+function solveNumbers(tiles, target) {
+  let best = { diff: Infinity, steps: [], result: null };
+
+  function search(nums, steps) {
+    for (const n of nums) {
+      const diff = Math.abs(n.val - target);
+      if (diff < best.diff) {
+        best = { diff, steps: [...steps], result: n.val };
+        if (diff === 0) return;
+      }
+    }
+    if (best.diff === 0 || nums.length < 2) return;
+
+    for (let i = 0; i < nums.length; i++) {
+      for (let j = 0; j < nums.length; j++) {
+        if (i === j) continue;
+        const a = nums[i].val;
+        const b = nums[j].val;
+        const rest = nums.filter((_, idx) => idx !== i && idx !== j);
+        const candidates = [];
+
+        if (a + b > 0) candidates.push({ val: a + b, label: `${a} + ${b} = ${a+b}` });
+        if (a > b) candidates.push({ val: a - b, label: `${a} − ${b} = ${a-b}` });
+        if (a * b > 1) candidates.push({ val: a * b, label: `${a} × ${b} = ${a*b}` });
+        if (b > 1 && a % b === 0) candidates.push({ val: a / b, label: `${a} ÷ ${b} = ${a/b}` });
+
+        for (const c of candidates) {
+          if (c.val > 0 && Number.isInteger(c.val)) {
+            search([...rest, { val: c.val }], [...steps, c.label]);
+          }
+          if (best.diff === 0) return;
+        }
+      }
+    }
+  }
+
+  const nums = tiles.map(v => ({ val: v }));
+  search(nums, []);
+  return best;
+}
+
+// ══════════════════════════════════════════
+// TIMER
+// ══════════════════════════════════════════
+function startTimer(which) {
+  const barId = `timerBar${which}`;
+  const numId = `timerNum${which}`;
+  const wrapId = `timerWrap${which}`;
+  document.getElementById(wrapId).style.display = '';
+
+  const circumference = 276.5;
+  let timeLeft = 30;
+
+  function updateDisplay() {
+    const bar = document.getElementById(barId);
+    const num = document.getElementById(numId);
+    const frac = timeLeft / 30;
+    bar.style.strokeDashoffset = circumference * (1 - frac);
+
+    if (timeLeft <= 5) {
+      bar.className = 'timer-bar danger';
+      num.className = 'timer-num danger';
+    } else if (timeLeft <= 10) {
+      bar.className = 'timer-bar warning';
+      num.className = 'timer-num warning';
+    } else {
+      bar.className = 'timer-bar';
+      num.className = 'timer-num';
+    }
+    num.textContent = timeLeft;
+    if (timeLeft <= 10) playTick();
+  }
+
+  updateDisplay();
+  const ref = setInterval(() => {
+    timeLeft--;
+    updateDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(ref);
+      if (which === 'L') submitLetters();
+      else submitNumbers();
+    }
+  }, 1000);
+
+  if (which === 'L') state.letters.timerInterval = ref;
+  else state.numbers.timerInterval = ref;
+}
+
+function stopTimer(which) {
+  if (which === 'L' && state.letters.timerInterval) {
+    clearInterval(state.letters.timerInterval);
+    state.letters.timerInterval = null;
+  }
+  if (which === 'N' && state.numbers.timerInterval) {
+    clearInterval(state.numbers.timerInterval);
+    state.numbers.timerInterval = null;
+  }
+}
+
+// ══════════════════════════════════════════
+// RESULT SCREEN
+// ══════════════════════════════════════════
+function showResult(data) {
+  document.getElementById('resultModeTitle').textContent = data.mode.toUpperCase() + ' — RESULT';
+  document.getElementById('resultWord').textContent = data.word;
+  document.getElementById('resultScore').textContent = data.score;
+  document.getElementById('resultScore').className = 'result-score ' + (data.score > 0 ? (data.bannerClass === 'success' ? '' : 'partial') : 'miss');
+  document.getElementById('resultLabel').textContent = data.label;
+
+  const banner = document.getElementById('resultBanner');
+  banner.className = 'result-banner ' + data.bannerClass;
+
+  // Show original letter tiles for letters mode
+  const lettersRow = document.getElementById('resultLettersRow');
+  if (data.mode === 'letters' && data.allLetters) {
+    const pool = data.word.toLowerCase().split('');
+    lettersRow.innerHTML = data.allLetters.map(function(letter) {
+      const li = pool.indexOf(letter.toLowerCase());
+      const wasUsed = li !== -1;
+      if (wasUsed) pool.splice(li, 1);
+      const cls = wasUsed ? 'tile letter-tile selected' : 'tile letter-tile';
+      return '<div class="' + cls + '" style="animation:flip 0.3s ease both">' + letter + '</div>';
+    }).join('');
+    lettersRow.style.display = 'flex';
+  } else {
+    lettersRow.style.display = 'none';
+  }
+
+  // AI reveal
+  const aiContent = document.getElementById('aiContent');
+  if (data.mode === 'letters') {
+    const groups = data.wordGroups || {};
+    const lengths = Object.keys(groups).map(Number).sort((a,b) => b - a);
+    if (lengths.length === 0) {
+      aiContent.innerHTML = '<span class="text-grey">No words of 6+ letters found!</span>';
+    } else {
+      aiContent.innerHTML = lengths.map(len => {
+        const words = groups[len];
+        const label = len === 9 ? '9 letters ★' : len + ' letters';
+        const wordSpans = words.map(w =>
+          `<span style="font-family:var(--font-display);font-size:${len===9?'28px':'22px'};color:${len===9?'var(--gold)':'var(--white)'};letter-spacing:0.08em;margin-right:10px">${w.toUpperCase()}</span>`
+        ).join('');
+        return `<div style="margin-bottom:12px">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.25em;color:var(--teal);margin-bottom:5px">${label} (${words.length}${groups[len].length===20?'+':''})</div>
+          <div style="line-height:2;flex-wrap:wrap;display:flex;gap:4px 0">${wordSpans}</div>
+        </div>`;
+      }).join('');
+    }
+  } else {
+    const sol = data.aiSolution;
+    if (sol && sol.steps.length) {
+      aiContent.innerHTML = `<div class="ai-solution-steps">${sol.steps.map(s => `<div>${s.replace(' = ', ' <span class="eq">=</span> ')}</div>`).join('')}</div>
+        <div class="text-sm mt-8" style="color:var(--teal)">Best reachable: <strong>${sol.result}</strong> (${sol.diff === 0 ? 'exact!' : sol.diff + ' away'})</div>`;
+    } else {
+      aiContent.innerHTML = `<div class="text-grey">Target ${data.target} is reachable using: ${data.aiSolution?.result || '—'}</div>`;
+    }
+  }
+
+  showScreen('screenResult');
+}
+
+function playAgain() {
+  if (state.lastMode === 'letters') startLettersSetup();
+  else startNumbersSetup();
+}
+
+function switchMode() {
+  if (state.lastMode === 'letters') startNumbersSetup();
+  else startLettersSetup();
+}
+
+// ══════════════════════════════════════════
+// END SESSION
+// ══════════════════════════════════════════
+function showEndSession() {
+  if (state.session.rounds === 0) { goToMenu(); return; }
+  stopTimer('L'); stopTimer('N');
+
+  const s = state.session;
+  document.getElementById('sessionSummary').innerHTML = `
+    <div class="summary-stat"><span>Total Score</span><span class="summary-val">${s.score}</span></div>
+    <div class="summary-stat"><span>Rounds Played</span><span class="summary-val">${s.rounds}</span></div>
+    <div class="summary-stat"><span>Letters Rounds</span><span class="summary-val">${s.lettersRounds || 0}</span></div>
+    <div class="summary-stat"><span>Numbers Rounds</span><span class="summary-val">${s.numbersRounds || 0}</span></div>
+    <div class="summary-stat"><span>Best Single Round</span><span class="summary-val">${s.best}</span></div>
+  `;
+
+  document.getElementById('playerNameInput').value = '';
+  showScreen('screenEndSession');
+}
+
+function saveScore() {
+  const name = document.getElementById('playerNameInput').value.trim() || 'Anonymous';
+  addScore(name, state.session.score, state.session.rounds);
+  newSession();
+  showScreen('screenLeaderboard');
+}
+
+function newSession() {
+  state.session = { score: 0, rounds: 0, lettersRounds: 0, numbersRounds: 0, best: 0 };
+  document.getElementById('scoreBarVal').childNodes[0].textContent = '0';
+  document.getElementById('roundCount').textContent = '0 rounds';
+  document.getElementById('scoreBar').classList.add('hidden');
+  document.getElementById('btnEndSession').style.display = 'none';
+  showScreen('screenMenu');
+}
+
+// ── UTILS ──
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ══════════════════════════════════════════
+// WORD LIST — loaded from a compact inline
+// dictionary. We include ~10,000 common
+// English words covering lengths 2–9.
+// ══════════════════════════════════════════
+// ── WORD LIST: SCOWL via fetch + localStorage cache ──
+(function loadWordList() {
+  const CACHE_KEY = 'countdown_wordlist_v4';
+  const WORDLIST_URL = 'https://gist.githubusercontent.com/MarcSebes/ee96a20f6247d0b3407920ee49593982/raw/wordlist-60.txt';
+
+  function processWords(text) {
+    const lines = text.split('\n');
+    let count = 0;
+    for (const line of lines) {
+      const w = line.trim().toLowerCase();
+      if (w.length >= 2 && w.length <= 9 && /^[a-z]+$/.test(w)) {
+        WORD_LIST.add(w);
+        count++;
+      }
+    }
+    wordListReady = true;
+    wordListCallbacks.forEach(fn => fn());
+    wordListCallbacks = [];
+    console.log(`Dictionary ready: ${WORD_LIST.size} words`);
+    hideLoadingOverlay();
+  }
+
+  // Try cache first
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      console.log('Loading dictionary from cache...');
+      processWords(cached);
+      return;
+    }
+  } catch(e) {}
+
+  // Fetch from network
+  showLoadingOverlay('Downloading dictionary…');
+  fetch(WORDLIST_URL)
+    .then(r => {
+      if (!r.ok) throw new Error('Network response not ok');
+      return r.text();
+    })
+    .then(text => {
+      try { localStorage.setItem(CACHE_KEY, text); } catch(e) { console.warn('Could not cache wordlist:', e); }
+      processWords(text);
+    })
+    .catch(err => {
+      console.warn('Failed to fetch wordlist, using built-in fallback:', err);
+      useFallbackWordlist();
+    });
+})();
+
+// ── LOADING OVERLAY ──
+function showLoadingOverlay(msg) {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.style.display = 'flex';
+  overlay.style.pointerEvents = 'auto';
+  overlay.style.opacity = '1';
+  document.getElementById('loadingMsg').textContent = msg || 'Loading dictionary…';
+}
+function hideLoadingOverlay() {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.style.pointerEvents = 'none';
+  overlay.style.display = 'none';
+}
+
+// ── FALLBACK WORDLIST (used if fetch fails) ──
+function useFallbackWordlist() {
+  const fallback = "aa ab ace acid acne acre act add ado aft age ago aid aim air ale all alms aloe also alter am amp and ane ant any ape apt arc are area ark arm art ash ask ate atop axe ay aye bad bag bait bale ball balm ban band bane bar bare barn bars base bask bass bath bats bay be bed bee belt bent best bet bid big bile bill bin bit bite blow blue blur boar boat bod bone boo book boom bore born borne bra brag braid brain brake bran brave brew brine bring brow bun bunk buns bus bush but buy cab cafe call came can cane cap cape car card care cars case cat cave caw cede cell chat chin coal coat coax cod code coil coin coke cola cold come cone cool cope core cork corn cost cot cove cover cram creep crest crew crib crow cud cup cut dab dam damp dare dart dash date day deal dean debt deep den dent deny did dig dim din dine dip dire disk doe dog dome done dote dot dove down draw drew drop drum dry dub dug dune ear earn ease east eat eel egg ego elf elk elm emit end era eve even evil ewe fad fade fare farm fast fat fate fawn fee feel feet fell felt fend fern fig fin find fine fir fire firm fish fit fix flaw fled flit flop flow flux foal foil folk fond ford fore fork form fort foul fowl fray fro frog from fuel full fume fund fur gag gain gal game gap gas gate gave gay gaze gel gem get gig gird give glad glob gloom glow glue glut gnaw goal goat gob god gore gosh grab gram gray grew grid grime grip grit gun gut hack hag hale half halt hang hare harm hate haul have hawk hay head heal heap heat heel heir held helm help her hide high hike hill him hint hip hire hit hive hoar hoax hod hog hold hole hood hook hop home hope horn hose host hot how hub huge hum hunt hurl hurt hype ice icy idea idle ills ire isle jam jar jaw jet jig job jot joy jug jut keen kelp kept kin kind king knack knave knead knew knit knot know lab lace lack lade lag lake lame lamp land lane lap lash last late laud lava lawn laze lead leaf leak lean leap left leg lend lens let lice lid lift like lime limp line lint list live load loam loaf lock loft lone look loom loot lord lore lose loss lot loud love low lug made mail main make male mall malt mane map mar mark mart mast mate maul maze meal mean meat meet melt men mend mesh met mile mill mime mire mist moan moat mob mode mold mole mop more mote move mud mule mull must nail name nap neat neon nest net new nil nip node nor note nude null oaf oak oar oat odd ode off oil old omen once opt orb ore ova over owe owl own pace pack pad page pain pair pale palm pang pant pare park part past pat pave pawn peak peal peat peel peg pelt per pest pick pine pit plan plot plod ploy plug plum pod pole pond pool pore post pour pout pray prep prey prim pro prod prop pub puck pull pump punt pure push race rack raft rage raid rail rain rake ramp rang rank rant rash rate rave raw ray read real reap reed reel rein rely rent rest ride rift rig ring rip rise risk rite road roam roar robe rock rode role roll romp roof root rose rote rout row rub rule rum run runt rush rust rye sac sad safe sage sail same sane sap save scan seam seal seep self sell set sew shed shin ship shoe shot show shun shut sill sin site size slab slap slim slip slot slur smog smug snap soak sod soil some son sow span spat spin spit spot spud spur stab stag stew stem step stop stow stud stub stun sub sue sulk sum sun sure swap swat swim tab tack tail take tale talk tame tan tap task team tend term test tide tile till tilt time tire toll tome tone took tool top tore tort toss tour town trap tray tree trek trim trip trod true tube tuck use vale vane vary vast vat vent vest vim vine vow wade wail wake wane ward ware wart wasp wax wear weed well went west whim whip wick wide will wilt wink wire wit wolf word wore worm worn wove wrap wren writ yam yew yield abbot abbey abhor abort above abuse abyss acute adapt adept admit adopt adorn adult after agile agony agree ahead aisle alarm album alert algae alien align allay alloy aloof aloud amaze amend amiss ample angel anger angle angry ankle annex annoy aorta apron arena argue arise array arson aside aspen asset atlas attic audio audit augur avail avert avid award aware awful basic basis batch beard beast began beset black bland blank blast blend bless blink bloat block blond bloom blown blunt brand brash brisk brook brood broom brown brute budge built bulge bully bunch burst buyer bylaw cache camel carry catch cause cease cedar chair chalk chant chaos charm chase cheap check cheek cheer chess chest chief child chili chill chomp chore civic civil clamp clang clash clasp clean clear cleft clerk click cliff cling cloak close cloth clout cloud clung coast comet comic conch conic could court cover cower craft cramp crane crave crawl crazy creak cream creed creep crisp cross crowd cruel crumb crush crypt curve cyber daisy dance dandy daunt decay decoy defer delay depot depth derby detox digit dirty doubt draft drain drama drape drawl dread drift drink drive drove dryer dully dunce dusky dusty eagle early easel eaten eight elite embed empty endow enemy enjoy enter envoy essay evoke exact exert exist extra exude fable facet fancy flair flame flank flare flash flesh flick flock flood floor flour flown fluff flute foggy foray forge found freak fresh frisk front froth froze frugal gaudy gecko giddy given gland glare glaze gleam glean glide gloat gloss glove gnash gnome gorge gouge gourd grail grain graze greed greet grief groan grope gross guile guise gusto habit halve happy hardy harsh heady heart hefty herbs humid hinge hippo hoist holly hovel hover hyena ideal image imply inept inert infer inlet inner input inter irony ivory jaunt joust joker jumbo kayak kitty kneel knoll known kudos laden lapse latch latex laugh leaky legal lemon level light lithe lobby local lodge lowly lucid lucky lusty lyric magic major maker mange manor maple march marsh maxim mayor melon mercy metal midge mince mirth molar moldy moped mourn muddy naval nimble noble noisy noose nymph occur ocean offer onset optic outdo owing oxide ozone pagan panic party pasta patch patio peace peach pearl perky petty phase phone piano picky pixel pixie place plain plait plank plant plate plaza plead pluck plume plush poach power prank press pride privy prize probe prong proof psalm quota rainy ranch range raspy raven razor react rebel recap relay relic repay repel reset rigor rinse ripen risen risky rival rivet robin rocky roman rowdy royal ruddy ruler runic rusty sadly saint salon salsa saner sassy saucy scalp scant scare scarf scamp scold scone scorn scout seedy shady shake shall shaky shame share sheen shelf shell shone showy shred shrug silky silly slate sleet slick slide slime slope slosh sloth slump snare sneak snide soggy solar sonar sorry south spent spicy spill spine spire spoon spore spunk stamp stale stall stark start stash steak steal steam steel steep steer stern stiff still stink stock stomp stony stood storm stout stray stung style suave sugar suite sunny surly swamp swarm sweep swell swept swirl swoop table taboo tacky taken tawny tempo tense tepid terse thorn throb thumb tight tipsy titan token topaz torch trace trail trait tramp tricky tried troll trove trump truss tryst tumor tuner tunic twang twice tummy ultra uncut unfit unify union unite until upper upset urban usher utter vague valid valor value vapor vault vegan verse vigor viral visor vista vital vivid vixen vocal vogue vomit voter waken waltz waste water waver waxen weary whelp whiff whine whole wield windy witch witty woman worry worse worst wound woven wrest wring wrong yacht yodel young zappy zebra zesty zilch";
+  useFallbackWordlist.words = fallback;
+  const words = fallback.split(' ');
+  for (const w of words) {
+    if (w.length >= 2) WORD_LIST.add(w.toLowerCase());
+  }
+  wordListReady = true;
+  wordListCallbacks.forEach(fn => fn());
+  wordListCallbacks = [];
+  console.log(`Fallback dictionary loaded: ${WORD_LIST.size} words`);
+  hideLoadingOverlay();
+}
+
+// ── INIT ──
+loadSettings();
+goToMenu();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
 <!-- Version 1.0.4 Using SCOWL 60 Word List -->
 <html lang="en">
 <head>
