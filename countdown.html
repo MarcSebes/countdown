@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Version 1.0.4 Using SCOWL 60 Word List -->
+<!-- Version 1.0.5 Using SCOWL 60 Word List -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -996,6 +996,8 @@
     <div class="result-score" id="resultScore">0</div>
     <div class="result-label" id="resultLabel"></div>
   </div>
+
+  <div id="resultLettersRow" class="tiles-row" style="display:none;margin:8px 0 4px"></div>
 
   <div class="ai-reveal" id="aiReveal">
     <div class="ai-label">⚡ Best Possible Answer</div>
@@ -2024,6 +2026,22 @@ function showResult(data) {
 
   const banner = document.getElementById('resultBanner');
   banner.className = 'result-banner ' + data.bannerClass;
+
+  // Show original letter tiles for letters mode
+  const lettersRow = document.getElementById('resultLettersRow');
+  if (data.mode === 'letters' && data.allLetters) {
+    const pool = data.word.toLowerCase().split('');
+    lettersRow.innerHTML = data.allLetters.map(function(letter) {
+      const li = pool.indexOf(letter.toLowerCase());
+      const wasUsed = li !== -1;
+      if (wasUsed) pool.splice(li, 1);
+      const cls = wasUsed ? 'tile letter-tile selected' : 'tile letter-tile';
+      return '<div class="' + cls + '" style="animation:flip 0.3s ease both">' + letter + '</div>';
+    }).join('');
+    lettersRow.style.display = 'flex';
+  } else {
+    lettersRow.style.display = 'none';
+  }
 
   // AI reveal
   const aiContent = document.getElementById('aiContent');
