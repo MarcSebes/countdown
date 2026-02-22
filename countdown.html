@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Version 1.0.3.3 -->
+<!-- Version 1.0.4 Using SCOWL 60 Word List -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -228,20 +228,9 @@
     box-shadow: 0 8px 24px rgba(245,200,66,0.35);
   }
   .tile.used {
-    opacity: 0.35;
-    background: #0a1520;
-    border-color: #1a2a3a;
-    color: #2a4060;
+    opacity: 0.25;
     cursor: default;
     transform: none;
-    box-shadow: none;
-  }
-  .tile.used:hover {
-    background: #0a1520;
-    border-color: #1a2a3a;
-    color: #2a4060;
-    transform: none;
-    box-shadow: none;
   }
   .tile.revealed {
     animation: flip 0.3s ease forwards;
@@ -2120,8 +2109,8 @@ function shuffle(arr) {
 // ══════════════════════════════════════════
 // ── WORD LIST: SCOWL via fetch + localStorage cache ──
 (function loadWordList() {
-  const CACHE_KEY = 'countdown_wordlist_v2';
-  const WORDLIST_URL = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt';
+  const CACHE_KEY = 'countdown_wordlist_v3';
+  const WORDLIST_URL = 'https://gist.githubusercontent.com/MarcSebes/ee96a20f6247d0b3407920ee49593982/raw/30490f13e069f16db51c82c8feaf589a125de555/wordlist-60.txt';
 
   function processWords(text) {
     const lines = text.split('\n');
