@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Version 1.0.3.1 -->
+<!-- Version 1.0.3.2 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1125,12 +1125,13 @@ function onWordListReady(fn) {
 }
 
 // ── LETTER FREQUENCY POOLS (based on Countdown show) ──
+// Letter counts from Countdown_Letter_Distribution sheet
 const VOWEL_POOL = [
   ...Array(15).fill('A'),
   ...Array(21).fill('E'),
   ...Array(13).fill('I'),
   ...Array(13).fill('O'),
-  ...Array(5).fill('U')
+  ...Array(5).fill('U'),
 ];
 
 const CONSONANT_POOL = [
@@ -1138,21 +1139,20 @@ const CONSONANT_POOL = [
   ...Array(3).fill('C'),
   ...Array(6).fill('D'),
   ...Array(2).fill('F'),
-  ...Array(4).fill('G'),
-  ...Array(4).fill('H'),
+  ...Array(3).fill('G'),
+  ...Array(2).fill('H'),
   ...Array(1).fill('J'),
   ...Array(1).fill('K'),
   ...Array(5).fill('L'),
   ...Array(4).fill('M'),
   ...Array(8).fill('N'),
-  ...Array(1).fill('P'), // actually 4 in real countdown, keeping common
   ...Array(4).fill('P'),
   ...Array(1).fill('Q'),
   ...Array(9).fill('R'),
   ...Array(9).fill('S'),
   ...Array(9).fill('T'),
   ...Array(1).fill('V'),
-  ...Array(2).fill('W'),
+  ...Array(1).fill('W'),
   ...Array(1).fill('X'),
   ...Array(1).fill('Y'),
   ...Array(1).fill('Z'),
