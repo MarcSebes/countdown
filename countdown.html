@@ -227,10 +227,21 @@
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(245,200,66,0.35);
   }
-  .tile.used {
-    opacity: 0.25;
+ .tile.used {
+    opacity: 0.35;
+    background: #0a1520;
+    border-color: #1a2a3a;
+    color: #2a4060;
     cursor: default;
     transform: none;
+    box-shadow: none;
+  }
+  .tile.used:hover {
+    background: #0a1520;
+    border-color: #1a2a3a;
+    color: #2a4060;
+    transform: none;
+    box-shadow: none;
   }
   .tile.revealed {
     animation: flip 0.3s ease forwards;
