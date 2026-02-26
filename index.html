@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Version 1.0.5 Using SCOWL 60 Word List -->
+<!-- Version 1.0.6 More Flexibility -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -907,7 +907,10 @@
   <div class="flex-row mt-8">
     <button class="btn btn-gold" onclick="submitLetters()" id="btnSubmitLetters">Submit Word</button>
     <button class="btn btn-ghost btn-sm" onclick="clearWord()">Clear</button>
+    <button class="btn btn-outline" onclick="finishLetters()" id="btnFinishLetters" style="display:none">Finish</button>
   </div>
+
+  <div id="submittedWordsList" style="display:none;margin-top:12px;text-align:center"></div>
 
   <div class="text-grey text-xs mt-8 text-center">Click tiles to build your word · Click word tiles to remove</div>
 </div>
@@ -981,7 +984,9 @@
   <div class="flex-row mt-8">
     <button class="btn btn-gold" onclick="submitNumbers()" id="btnSubmitNumbers">Submit Answer</button>
     <button class="btn btn-ghost btn-sm" onclick="resetNumbers()">Reset All</button>
+    <button class="btn btn-ghost btn-sm" onclick="checkSolutionExists()" id="btnCheckSolution" style="display:none">Is there a solution?</button>
   </div>
+  <div id="solutionExistsMsg" style="display:none;margin-top:8px;text-align:center;font-size:13px;letter-spacing:0.05em"></div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -999,6 +1004,7 @@
   </div>
 
   <div id="resultLettersRow" class="tiles-row" style="display:none;margin:8px 0 4px"></div>
+  <div id="resultSubmittedWords" style="display:none;margin:8px 0;text-align:center"></div>
 
   <div class="ai-reveal" id="aiReveal">
     <div class="ai-label">⚡ Best Possible Answer</div>
@@ -1382,9 +1388,16 @@ function drawLetter(type) {
   let pool = type === 'vowel' ? ls.vowelPoolLeft : ls.consonantPoolLeft;
   if (!pool.length) return;
 
-  const idx = Math.floor(Math.random() * pool.length);
-  const letter = pool[idx];
-  pool.splice(idx, 1);
+  // Feature 4: exclude letters already drawn 3 times
+  const drawnCounts = {};
+  ls.drawnTiles.forEach(function(t) { drawnCounts[t.letter] = (drawnCounts[t.letter] || 0) + 1; });
+  const filteredPool = pool.filter(function(l) { return (drawnCounts[l] || 0) < 3; });
+  const drawFrom = filteredPool.length > 0 ? filteredPool : pool;
+
+  const idx = Math.floor(Math.random() * drawFrom.length);
+  const letter = drawFrom[idx];
+  const poolIdx = pool.indexOf(letter);
+  pool.splice(poolIdx, 1);
 
   ls.drawnTiles.push({ letter, type });
   document.getElementById('btnQuickPick').style.display = 'none';
@@ -1455,6 +1468,7 @@ function startLettersGame() {
   const ls = state.letters;
   ls.selectedIndices = [];
   ls.submitted = false;
+  ls.submittedWords = [];
   ls.timeLeft = 30;
 
   // Render tiles
@@ -1522,46 +1536,96 @@ function submitLetters() {
     return;
   }
 
-  stopTimer('L');
-  ls.submitted = true;
-
   const word = ls.selectedIndices.map(i => ls.drawnTiles[i].letter).join('').toLowerCase();
   const allLetters = ls.drawnTiles.map(t => t.letter);
   const valid = isValidWord(word, allLetters);
+  const timed = state.settings.timer;
 
-  let score = 0;
-  let label = '';
-  let bannerClass = 'miss';
+  // Untimed: reject invalid words with a warning (Feature 2)
+  if (!timed && !valid) {
+    showLetterError(word.toUpperCase() + ' is not a valid word — try again!');
+    return;
+  }
 
-  if (!valid && ls.selectedIndices.length > 0) {
-    label = word.toUpperCase() + ' is not a valid word';
-  } else if (valid) {
+  // Untimed: allow multiple submissions (Feature 1)
+  if (!timed) {
+    if (valid) {
+      const existing = ls.submittedWords.find(function(w) { return w.word === word; });
+      if (!existing) {
+        ls.submittedWords.push({ word: word, score: word.length === 9 ? 18 : word.length });
+        playSuccess();
+      }
+      ls.selectedIndices.forEach(function(i) { document.getElementById('ltile' + i).classList.remove('used'); });
+      ls.selectedIndices = [];
+      renderWordDisplay();
+      document.getElementById('letterError').textContent = '';
+      renderSubmittedWords();
+      document.getElementById('btnFinishLetters').style.display = '';
+    }
+    return;
+  }
+
+  // Timed: single-submit
+  stopTimer('L');
+  ls.submitted = true;
+  finishLettersWithWord(word, valid, allLetters);
+}
+
+function finishLetters() {
+  const ls = state.letters;
+  if (ls.submitted) return;
+  ls.submitted = true;
+  stopTimer('L');
+  const allLetters = ls.drawnTiles.map(function(t) { return t.letter; });
+  let bestEntry = null;
+  for (const entry of ls.submittedWords) {
+    if (!bestEntry || entry.score > bestEntry.score) bestEntry = entry;
+  }
+  const word = bestEntry ? bestEntry.word : '';
+  finishLettersWithWord(word, !!bestEntry, allLetters);
+}
+
+function finishLettersWithWord(word, valid, allLetters) {
+  let score = 0, label = '', bannerClass = 'miss';
+  if (!valid || !word) {
+    label = word ? word.toUpperCase() + ' is not a valid word' : 'No word submitted';
+  } else {
     score = word.length === 9 ? 18 : word.length;
-    label = word.length === 9 ? '🌟 Nine letters! Double score!' : `${word.length}-letter word`;
+    label = word.length === 9 ? '🌟 Nine letters! Double score!' : word.length + '-letter word';
     bannerClass = 'success';
     playSuccess();
   }
-
-  // AI reveal
   const wordGroups = findBestWords(allLetters);
-
-  // Save to session
+  const ls = state.letters;
   if (state.session.rounds === 0) state.session.lettersRounds = 0;
   state.session.lettersRounds++;
   if (score > state.session.best) state.session.best = score;
   addToSession(score);
-
-  // Show result
   showResult({
     mode: 'letters',
-    word: word.toUpperCase(),
-    score,
-    label,
-    bannerClass,
-    valid,
-    wordGroups,
-    allLetters
+    word: word ? word.toUpperCase() : '—',
+    score: score,
+    label: label,
+    bannerClass: bannerClass,
+    valid: valid,
+    wordGroups: wordGroups,
+    allLetters: allLetters,
+    submittedWords: ls.submittedWords
   });
+}
+
+function renderSubmittedWords() {
+  const ls = state.letters;
+  const el = document.getElementById('submittedWordsList');
+  if (!ls.submittedWords.length) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  const sorted = [...ls.submittedWords].sort(function(a,b) { return b.score - a.score; });
+  el.innerHTML = '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.2em;color:var(--teal);margin-bottom:6px">Submitted words</div>'
+    + sorted.map(function(e) {
+        return '<span style="font-family:var(--font-display);font-size:22px;color:var(--gold);margin:0 8px">'
+          + e.word.toUpperCase()
+          + ' <span style="font-size:13px;color:var(--grey)">(' + e.score + ')</span></span>';
+      }).join('');
 }
 
 function showLetterError(msg) {
@@ -1596,7 +1660,7 @@ function findBestWords(letters) {
   const grouped = {};
 
   for (const word of WORD_LIST) {
-    if (word.length < 6 || word.length > 9) continue;
+    if (word.length < 5 || word.length > 9) continue;
     if (canMakeWord(word, avail)) {
       if (!grouped[word.length]) grouped[word.length] = [];
       grouped[word.length].push(word);
@@ -1683,6 +1747,10 @@ function startNumbersGame() {
   const timerWrapN = document.getElementById('timerWrapN');
   if (state.settings.timer) { timerWrapN.style.display = ''; startTimer('N'); }
   else timerWrapN.style.display = 'none';
+  const btnCheck = document.getElementById('btnCheckSolution');
+  const solMsg = document.getElementById('solutionExistsMsg');
+  if (btnCheck) { btnCheck.style.display = state.settings.timer ? 'none' : ''; btnCheck.disabled = false; btnCheck.textContent = 'Is there a solution?'; }
+  if (solMsg) { solMsg.style.display = 'none'; solMsg.textContent = ''; }
 }
 
 function renderNumberTiles() {
@@ -1846,6 +1914,26 @@ function resetNumbers() {
   document.getElementById('numbersError').textContent = '';
   renderCalcInputRow();
   updateWorkingDisplay();
+}
+
+function checkSolutionExists() {
+  const ns = state.numbers;
+  const btn = document.getElementById('btnCheckSolution');
+  const msg = document.getElementById('solutionExistsMsg');
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+  setTimeout(function() {
+    const result = solveNumbers(ns.tiles, ns.target);
+    msg.style.display = 'block';
+    if (result && result.diff === 0) {
+      msg.innerHTML = '<span style="color:var(--teal)">✓ Yes — an exact solution exists!</span>';
+    } else if (result && result.diff !== Infinity) {
+      msg.innerHTML = '<span style="color:var(--gold)">No exact solution. Closest possible: ' + result.result + ' (' + result.diff + ' away)</span>';
+    } else {
+      msg.innerHTML = '<span style="color:var(--grey)">No solution found</span>';
+    }
+    btn.style.display = 'none';
+  }, 30);
 }
 
 function submitNumbers() {
@@ -2030,6 +2118,24 @@ function showResult(data) {
 
   // Show original letter tiles for letters mode
   const lettersRow = document.getElementById('resultLettersRow');
+  // Show submitted words list on result screen (untimed multi-submit)
+  const resultSubmitted = document.getElementById('resultSubmittedWords');
+  if (resultSubmitted) {
+    if (data.mode === 'letters' && data.submittedWords && data.submittedWords.length > 1) {
+      const sorted = [...data.submittedWords].sort(function(a,b) { return b.score - a.score; });
+      resultSubmitted.style.display = 'block';
+      resultSubmitted.innerHTML = '<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:var(--teal);margin-bottom:5px">All submitted words</div>'
+        + sorted.map(function(e) {
+            return '<span style="font-family:var(--font-display);font-size:18px;color:'
+              + (e.score === Math.max(...data.submittedWords.map(function(w){return w.score;})) ? 'var(--gold)' : 'var(--white)')
+              + ';margin:0 6px">' + e.word.toUpperCase()
+              + ' <span style="font-size:12px;color:var(--grey)">(' + e.score + ')</span></span>';
+          }).join('');
+    } else {
+      resultSubmitted.style.display = 'none';
+    }
+  }
+
   if (data.mode === 'letters' && data.allLetters) {
     const pool = data.word.toLowerCase().split('');
     lettersRow.innerHTML = data.allLetters.map(function(letter) {
@@ -2054,7 +2160,7 @@ function showResult(data) {
     } else {
       aiContent.innerHTML = lengths.map(len => {
         const words = groups[len];
-        const label = len === 9 ? '9 letters ★' : len + ' letters';
+        const label = len === 9 ? '9 letters ★' : len === 5 ? '5 letters' : len + ' letters';
         const wordSpans = words.map(w =>
           `<span style="font-family:var(--font-display);font-size:${len===9?'28px':'22px'};color:${len===9?'var(--gold)':'var(--white)'};letter-spacing:0.08em;margin-right:10px">${w.toUpperCase()}</span>`
         ).join('');
